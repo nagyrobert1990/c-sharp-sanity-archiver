@@ -16,51 +16,110 @@ namespace SanityArchiver
 {
     public partial class SanityArchiver : Form
     {
-        List<FileInfo> filesList = new List<FileInfo>();
+        List<FileInfo> filesListLeft = new List<FileInfo>();
+        List<FileInfo> filesListRight = new List<FileInfo>();
 
         public SanityArchiver()
         {
             InitializeComponent();
         }
 
-        private void OpenButton_Click(object sender, EventArgs e)
+        private void OpenButtonLeft_Click(object sender, EventArgs e)
         {
-            CreateFileList();
+            CreateFileList(filesListLeft, listViewLeft, pathTextBoxLeft, sizeLabelLeft);
         }
 
-        private void CreateFileList()
+        private void OpenButtonRight_Click(object sender, EventArgs e)
         {
-            filesList.Clear();
-            listView.Items.Clear();
+            CreateFileList(filesListRight, listViewRight, pathTextBoxRight, sizeLabelRight);
+        }
+
+        private void CreateFileList(List<FileInfo> fi, ListView lv, TextBox ptb, Label sl, string searchPattern = "*")
+        {
+            fi.Clear();
+            lv.Items.Clear();
             using (FolderBrowserDialog fbd = new FolderBrowserDialog() { Description = "Select path" })
             {
                 if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    pathTextBox.Text = fbd.SelectedPath;
-                    foreach (string item in Directory.GetFiles(fbd.SelectedPath))
+                    ptb.Text = fbd.SelectedPath;
+
+                    foreach (string item in Directory.GetFiles(fbd.SelectedPath, searchPattern))
                     {
                         imageList.Images.Add(Icon.ExtractAssociatedIcon(item));
                         FileInfo fileInfo = new FileInfo(item);
-                        filesList.Add(fileInfo);
-                        listView.Items.Add(fileInfo.Name, imageList.Images.Count - 1);
+                        fi.Add(fileInfo);
+                        lv.Items.Add(fileInfo.Name, imageList.Images.Count - 1);
                     }
+
+                    sl.Text = $"Directory size: {GetDirectorySize(fbd.SelectedPath)} byte";
                 }
             }
         }
 
-        private void ListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        private long GetDirectorySize(string searchDirectory)
         {
-            if (listView.FocusedItem != null)
+            var files = Directory.EnumerateFiles(searchDirectory);
+
+            var currentSize = (from file in files let fileInfo = new FileInfo(file) select fileInfo.Length).Sum();
+
+            var directories = Directory.EnumerateDirectories(searchDirectory);
+
+            var subDirSize = (from directory in directories select GetDirectorySize(directory)).Sum();
+
+            return currentSize + subDirSize;
+        }
+
+        private void ListFiles(string[] files, List<FileInfo> fl, ListView lv, TextBox tb, Label sl)
+        {
+            fl.Clear();
+            lv.Items.Clear();
+
+            foreach (string item in files)
             {
-                Process.Start(filesList[listView.FocusedItem.Index].FullName);
+                imageList.Images.Add(Icon.ExtractAssociatedIcon(item));
+                FileInfo fileInfo = new FileInfo(item);
+                fl.Add(fileInfo);
+                lv.Items.Add(fileInfo.Name, imageList.Images.Count - 1);
+            }
+
+            sl.Text = $"Directory size: {GetDirectorySize(tb.Text)} byte";
+        }
+
+        private void RefreshBothListView()
+        {
+            try
+            {
+                ListFiles(Directory.GetFiles(pathTextBoxLeft.Text), filesListLeft, listViewLeft, pathTextBoxLeft, sizeLabelLeft);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            try
+            {
+                ListFiles(Directory.GetFiles(pathTextBoxRight.Text), filesListRight, listViewRight, pathTextBoxRight, sizeLabelRight);
+            }
+            catch (Exception)
+            {
+
+                return;
             }
         }
 
-        private void ListView_MouseClick(object sender, MouseEventArgs e)
+        private void ListViewLeft_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (listView.FocusedItem != null)
+            if (listViewLeft.FocusedItem != null)
             {
-                FileInfo fi = filesList[listView.FocusedItem.Index];
+                Process.Start(filesListLeft[listViewLeft.FocusedItem.Index].FullName);
+            }
+        }
+
+        private void ListViewLeft_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                FileInfo fi = filesListLeft[listViewLeft.FocusedItem.Index];
                 if ((File.GetAttributes(fi.FullName)
                     & FileAttributes.Hidden)
                     != FileAttributes.Hidden & fi.Extension != ".gz")
@@ -86,9 +145,9 @@ namespace SanityArchiver
 
         private void CompressButton_Click(object sender, EventArgs e)
         {
-            if (listView.FocusedItem != null)
+            if (listViewLeft.FocusedItem != null)
             {
-                FileInfo fi = filesList[listView.FocusedItem.Index];
+                FileInfo fi = filesListLeft[listViewLeft.FocusedItem.Index];
                 if (compressButton.Text == "Compress")
                 {
                     Compress(fi);
@@ -99,20 +158,7 @@ namespace SanityArchiver
                 }
             }
 
-            filesList.Clear();
-            listView.Items.Clear();
-            ListFiles(Directory.GetFiles(pathTextBox.Text));
-        }
-
-        private void ListFiles(string[] files)
-        {
-            foreach (string item in files)
-            {
-                imageList.Images.Add(Icon.ExtractAssociatedIcon(item));
-                FileInfo fileInfo = new FileInfo(item);
-                filesList.Add(fileInfo);
-                listView.Items.Add(fileInfo.Name, imageList.Images.Count - 1);
-            }
+            RefreshBothListView();
         }
 
         private void Compress(FileInfo fi)
@@ -149,21 +195,19 @@ namespace SanityArchiver
 
         private void EncryptButton_Click(object sender, EventArgs e)
         {
-            if (listView.FocusedItem != null)
+            if (listViewLeft.FocusedItem != null)
             {
                 if (encryptButton.Text == "Decrypt")
                 {
-                    DecryptFile(filesList[listView.FocusedItem.Index].FullName);
+                    DecryptFile(filesListLeft[listViewLeft.FocusedItem.Index].FullName);
                 }
                 else
                 {
-                    EncryptFile(filesList[listView.FocusedItem.Index].FullName);
+                    EncryptFile(filesListLeft[listViewLeft.FocusedItem.Index].FullName);
                 }
             }
 
-            filesList.Clear();
-            listView.Items.Clear();
-            ListFiles(Directory.GetFiles(pathTextBox.Text));
+            RefreshBothListView();
         }
 
         private void EncryptFile(string inputFile)
@@ -174,6 +218,71 @@ namespace SanityArchiver
         private void DecryptFile(string inputFile)
         {
             File.Decrypt(inputFile);
+        }
+
+        private void CopyButton_Click(object sender, EventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                string sourcePath = filesListLeft[listViewLeft.FocusedItem.Index].FullName;
+                string targetPath = pathTextBoxRight.Text + "\\" + filesListLeft[listViewLeft.FocusedItem.Index].Name;
+
+                File.Copy(sourcePath, targetPath, true);
+
+                RefreshBothListView();
+            }
+        }
+
+        private void MoveButton_Click(object sender, EventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                string sourcePath = filesListLeft[listViewLeft.FocusedItem.Index].FullName;
+                string targetPath = pathTextBoxRight.Text + "\\" + filesListLeft[listViewLeft.FocusedItem.Index].Name;
+
+                try
+                {
+                    File.Move(sourcePath, targetPath);
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+
+                RefreshBothListView();
+            }
+        }
+
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                string sourcePath = filesListLeft[listViewLeft.FocusedItem.Index].FullName;
+
+                try
+                {
+                    File.Delete(sourcePath);
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+
+                RefreshBothListView();
+            }
+        }
+
+        private void SearchButton_Click(object sender, EventArgs e)
+        {
+            if (String.IsNullOrEmpty(searchField.Text))
+            {
+                RefreshBothListView();
+            }
+            else
+            {
+                string searchPattern = "*" + searchField.Text + "*";
+                ListFiles(Directory.GetFiles(pathTextBoxLeft.Text, searchPattern), filesListLeft, listViewLeft, pathTextBoxLeft, sizeLabelLeft);
+            }
         }
     }
 }
