@@ -120,9 +120,7 @@ namespace SanityArchiver
             if (listViewLeft.FocusedItem != null)
             {
                 FileInfo fi = filesListLeft[listViewLeft.FocusedItem.Index];
-                if ((File.GetAttributes(fi.FullName)
-                    & FileAttributes.Hidden)
-                    != FileAttributes.Hidden & fi.Extension != ".gz")
+                if (fi.Extension != ".gz")
                 {
                     compressButton.Text = "Compress";
                 }
@@ -139,6 +137,24 @@ namespace SanityArchiver
                 else
                 {
                     encryptButton.Text = "Encrypt";
+                }
+
+                if ((attr & FileAttributes.Hidden) == FileAttributes.Hidden)
+                {
+                    hideButton.Text = "Unhide";
+                }
+                else
+                {
+                    hideButton.Text = "Hide";
+                }
+
+                if ((attr & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                {
+                    roButton.Text = "Writable";
+                }
+                else
+                {
+                    roButton.Text = "Read-only";
                 }
             }
         }
@@ -282,6 +298,57 @@ namespace SanityArchiver
             {
                 string searchPattern = "*" + searchField.Text + "*";
                 ListFiles(Directory.GetFiles(pathTextBoxLeft.Text, searchPattern), filesListLeft, listViewLeft, pathTextBoxLeft, sizeLabelLeft);
+            }
+        }
+
+        private FileAttributes RemoveAttribute(FileAttributes attributes, FileAttributes attributesToRemove)
+        {
+            return attributes & ~attributesToRemove;
+        }
+
+        private void HideButton_Click(object sender, EventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                string filePath = filesListLeft[listViewLeft.FocusedItem.Index].FullName;
+
+                FileInfo fi = new FileInfo(filePath);
+                FileAttributes attributes = File.GetAttributes(fi.FullName);
+
+
+                if ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                {
+                    // Show the file.
+                    attributes = RemoveAttribute(attributes, FileAttributes.Hidden);
+                    File.SetAttributes(filePath, attributes);
+                }
+                else
+                {
+                    // Hide the filefilePath
+                    File.SetAttributes(filePath, File.GetAttributes(filePath) | FileAttributes.Hidden);
+                }
+            }
+        }
+
+        private void roButton_Click(object sender, EventArgs e)
+        {
+            if (listViewLeft.FocusedItem != null)
+            {
+                string filePath = filesListLeft[listViewLeft.FocusedItem.Index].FullName;
+                FileAttributes attributes = File.GetAttributes(filePath);
+
+                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                {
+                    // unset Read only on file.
+                    attributes = attributes & ~FileAttributes.ReadOnly;
+                    File.SetAttributes(filePath, attributes);
+                }
+                else
+                {
+                    // set Read only on file.
+                    attributes = attributes | FileAttributes.ReadOnly;
+                    File.SetAttributes(filePath, attributes);
+                }
             }
         }
     }

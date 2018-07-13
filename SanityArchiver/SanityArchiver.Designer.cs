@@ -47,6 +47,8 @@
             this.sizeLabelRight = new System.Windows.Forms.Label();
             this.searchField = new System.Windows.Forms.TextBox();
             this.searchButton = new System.Windows.Forms.Button();
+            this.hideButton = new System.Windows.Forms.Button();
+            this.roButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // openButtonLeft
@@ -197,14 +199,14 @@
             // 
             // searchField
             // 
-            this.searchField.Location = new System.Drawing.Point(9, 300);
+            this.searchField.Location = new System.Drawing.Point(12, 301);
             this.searchField.Name = "searchField";
             this.searchField.Size = new System.Drawing.Size(75, 20);
             this.searchField.TabIndex = 15;
             // 
             // searchButton
             // 
-            this.searchButton.Location = new System.Drawing.Point(9, 327);
+            this.searchButton.Location = new System.Drawing.Point(12, 326);
             this.searchButton.Name = "searchButton";
             this.searchButton.Size = new System.Drawing.Size(75, 23);
             this.searchButton.TabIndex = 16;
@@ -212,11 +214,33 @@
             this.searchButton.UseVisualStyleBackColor = true;
             this.searchButton.Click += new System.EventHandler(this.SearchButton_Click);
             // 
+            // hideButton
+            // 
+            this.hideButton.Location = new System.Drawing.Point(12, 157);
+            this.hideButton.Name = "hideButton";
+            this.hideButton.Size = new System.Drawing.Size(75, 23);
+            this.hideButton.TabIndex = 17;
+            this.hideButton.Text = "Hide";
+            this.hideButton.UseVisualStyleBackColor = true;
+            this.hideButton.Click += new System.EventHandler(this.HideButton_Click);
+            // 
+            // roButton
+            // 
+            this.roButton.Location = new System.Drawing.Point(12, 186);
+            this.roButton.Name = "roButton";
+            this.roButton.Size = new System.Drawing.Size(75, 23);
+            this.roButton.TabIndex = 18;
+            this.roButton.Text = "Read-only";
+            this.roButton.UseVisualStyleBackColor = true;
+            this.roButton.Click += new System.EventHandler(this.roButton_Click);
+            // 
             // SanityArchiver
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(811, 357);
+            this.Controls.Add(this.roButton);
+            this.Controls.Add(this.hideButton);
             this.Controls.Add(this.searchButton);
             this.Controls.Add(this.searchField);
             this.Controls.Add(this.sizeLabelRight);
@@ -261,6 +285,8 @@
         private System.Windows.Forms.Label sizeLabelRight;
         private System.Windows.Forms.TextBox searchField;
         private System.Windows.Forms.Button searchButton;
+        private System.Windows.Forms.Button hideButton;
+        private System.Windows.Forms.Button roButton;
     }
 }
 
